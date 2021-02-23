@@ -10,4 +10,19 @@ public class SecurityController {
     public String index(){
         return "home";
     }
+
+    @GetMapping("/user")
+    public String user(){
+        return "User";
+    }
+
+    @GetMapping("/admin/pay")
+    public String adminPay(){
+        return "AdminPay";
+    }
+
+    @GetMapping("/admin/**")
+    public String admin(){
+        return "AdminAndSys";
+    }
 }

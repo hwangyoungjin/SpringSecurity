@@ -1,9 +1,11 @@
 package io.securiy.security.mySecurity.config;
 
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
@@ -12,12 +14,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+    }
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
                 //생량-> 모든 url에 대해
                 .authorizeRequests() // 인가 설정
-                .antMatchers("/").permitAll() // home은 권한/인증 없이 모든 사용자 접근 가능
+                .antMatchers("/","/user").permitAll() // home은 권한/인증 없이 모든 사용자 접근 가능
                 .antMatchers("/mypage").hasRole("USER") // mypage는 USER 권한의 인증된 사용자만 접근 가능
                 .antMatchers("/messages").hasRole("MANAGER") // messages는 MANAGER 권한의 인증된 사용자만 접근 가능
                 .antMatchers("/config").hasRole("ADMIN") // config는 ADMIN 권환의 인증된 사용자만 접근가능
@@ -36,12 +44,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         String password = passwordEncoder().encode("1111");
 
         auth.inMemoryAuthentication().withUser("user").password(password).roles("USER");
-        auth.inMemoryAuthentication().withUser("manager").password(password).roles("MANAGER");
-        auth.inMemoryAuthentication().withUser("amdin").password(password).roles("ADMIN");
+        auth.inMemoryAuthentication().withUser("manager").password(password).roles("MANAGER","USER");
+        auth.inMemoryAuthentication().withUser("amdin").password(password).roles("ADMIN","MANAGER","USER");
     }
+
 
     @Bean
     protected PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
+
 }

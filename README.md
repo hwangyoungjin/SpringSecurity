@@ -36,7 +36,7 @@
 	            <groupId>org.springframework.boot</groupId>
 	            <artifactId>spring-boot-configuration-processor</artifactId>
 	        </dependency>
-	- modelmapper
+	- Entity와 DTO 맵핑을 위해 modelmapper의존성 추가
 	        <dependency>
 	            <groupId>org.modelmapper</groupId>
 	            <artifactId>modelmapper</artifactId>
@@ -120,5 +120,33 @@
 	    IMAGES(new String[]{"/images/**"}),
 	    WEB_JARS(new String[]{"/webjars/**"}),
 	    FAVICON(new String[]{"/favicon.*", "/*/icon-*"});
+	```
+	7. #### Account와 AccountDto 를 통해 회원가입 만들기
+	```java
+	1. JpaRepository 상속받아서 UserRepository 생성
+	  ===생략===	
+
+	2. UserService 인터페이스와 UserServiceImpl 구현
+	  ===생략===
+	
+	3. UserController 구현
+	 - Dto객체로 입력값 받고
+	 - MoedlMapper를 통해 DTO->Entity 매핑하고
+	 - passwordEncoder를 통해 암호화하고
+	 - userService로 저장
+	    @PostMapping("/users")
+	    public String createUser(AccountDto accountDto){
+	        //모델맵퍼 사용 : accountDto 정보가 account객체에 담김
+	        ModelMapper modelMapper = new ModelMapper();
+	        Account account = modelMapper.map(accountDto, Account.class);
+	        account.setPassword(passwordEncoder.encode(account.getPassword()));
+	        userService.createUser(account);
+	        return "redirect:/";
+	    }
+	 - 이외 GetMapping은 생략
+
+	* Applicatgino.properties의 
+	spring.jpa.hibernate.ddl-auto=createJpa를 통해 
+	DB에 따로 테이블 안만들어도 자동으로 @Entity붙은 Account 테이블 만들어준다. 
 	```
 

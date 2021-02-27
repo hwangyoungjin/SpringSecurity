@@ -25,7 +25,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 //생량-> 모든 url에 대해
                 .authorizeRequests() // 인가 설정
-                .antMatchers("/","/user").permitAll() // home은 권한/인증 없이 모든 사용자 접근 가능
+                .antMatchers("/","/users").permitAll() // home은 권한/인증 없이 모든 사용자 접근 가능
                 .antMatchers("/mypage").hasRole("USER") // mypage는 USER 권한의 인증된 사용자만 접근 가능
                 .antMatchers("/messages").hasRole("MANAGER") // messages는 MANAGER 권한의 인증된 사용자만 접근 가능
                 .antMatchers("/config").hasRole("ADMIN") // config는 ADMIN 권환의 인증된 사용자만 접근가능

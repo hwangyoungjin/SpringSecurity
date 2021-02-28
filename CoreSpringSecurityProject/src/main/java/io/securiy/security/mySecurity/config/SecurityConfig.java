@@ -1,5 +1,7 @@
 package io.securiy.security.mySecurity.config;
 
+import io.securiy.security.service.CustomUserDetailService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +16,29 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+//    /**
+//     * 메모리 방식으로
+//     * 사용자 추가하기
+//     */
+//    @Override
+//    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+//        //패스워드는 암호화 된 방식을 사용
+//        String password = passwordEncoder().encode("1111");
+//
+//        auth.inMemoryAuthentication().withUser("user").password(password).roles("USER");
+//        auth.inMemoryAuthentication().withUser("manager").password(password).roles("MANAGER","USER");
+//        auth.inMemoryAuthentication().withUser("amdin").password(password).roles("ADMIN","MANAGER","USER");
+//    }
+
+    @Autowired
+    private CustomUserDetailService customUserDetailService;
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(customUserDetailService);
+    }
+
 
     @Override
     public void configure(WebSecurity web) throws Exception {
@@ -32,20 +57,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated() // 설정이외 모든요청은 권한과 무관하고 인증된 사용
         .and()
                 .formLogin(); //인증은form 방식
-    }
-
-    /**
-     * 메모리 방식으로
-     * 사용자 추가하기
-     */
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        //패스워드는 암호화 된 방식을 사용
-        String password = passwordEncoder().encode("1111");
-
-        auth.inMemoryAuthentication().withUser("user").password(password).roles("USER");
-        auth.inMemoryAuthentication().withUser("manager").password(password).roles("MANAGER","USER");
-        auth.inMemoryAuthentication().withUser("amdin").password(password).roles("ADMIN","MANAGER","USER");
     }
 
 

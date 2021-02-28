@@ -146,7 +146,58 @@
 	 - 이외 GetMapping은 생략
 
 	* Applicatgino.properties의 
-	spring.jpa.hibernate.ddl-auto=createJpa를 통해 
-	DB에 따로 테이블 안만들어도 자동으로 @Entity붙은 Account 테이블 만들어준다. 
+	spring.jpa.hibernate.ddl-auto=create 설정을 통해 
+	DB에 따로 테이블 안만들어도 JPA가 자동으로 @Entity붙은 Account 테이블 만들어준다. 
 	```
+	
+	8. #### UserDetailsService 커스텀 ( + UserDetails 커스텀)
+	```java
+	1. config의 인메모리방식 삭제
+	2. UserDetails의 구현체인 User클래스 상속받기
+	 public class AccountContext extends User {
+	     /**
+	      * 나중에 필요시 참조할 수 있도록
+	      */
+	     private final Account account;
+	
+	     //생성자에서 id/pw가 아닌 account 객체로 받기
+	     public AccountContext(Account account, Collection<? extends GrantedAuthority> authorities) {
+	         super(account.getUsername(), account.getPassword(), authorities);
+	         this.account = account;
+	     }
+	 }
+	3. UserDetailsService 구현하기
+	    @Service
+	    public class CustomUserDetailService implements UserDetailsService {
+	    
+	        @Autowired
+	        private UserRepository userRepository;
+	    
+	        @Override
+	        public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
+	    
+	            Account account = userRepository.findByUsername(s);
+	    
+	            //null인경우
+	            if(account == null){
+	                throw new UsernameNotFoundException("UsernameNotFoundException");
+	            }
+	    
+	            //권한 설정
+	            List<GrantedAuthority> roles = new ArrayList<>();
+	            roles.add(new SimpleGrantedAuthority(account.getRole()));
+	    
+	            AccountContext accountContext = new AccountContext(account,roles);
+	    
+	            return accountContext;
+	        }
+	    }
+	4. config를 통해 시큐리티에서 내가만든 CustomUserDetailsService 사용하도록 설정
+	    @Autowired
+	    private CustomUserDetailService customUserDetailService;
 
+	    @Override
+	    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+	        auth.userDetailsService(customUserDetailService);
+	    }
+	``` 

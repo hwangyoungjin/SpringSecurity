@@ -2,15 +2,12 @@
 스프링시큐리티
 
 ---
-### 순서
+### 학습
 ```java
-1. Spring Security의 보안설정 API와 연계된 각 Filter
-2. Spring Security 내부 아키텍처와 각 객체의 역할 및 처리과정
-3. Spring Security를 활용한 간단한 Project (아래 4개 사용)
-	- Spring Boot
-	- Spring MVC
-	- Spring Data JPA
-	- Thymeleaf
+* Spring Security의 보안설정 API와 연계된 각 Filter 학습
+* Spring Security 내부 아키텍처와 각 객체의 역할 및 처리과정 학습
+* Spring Security를 활용한 간단한 Project 
+	- CoreSpringSecurityProject
 ```
 1. ### CoreSpringSecurityProject
 	1. #### 환경설정
@@ -250,4 +247,25 @@
 	    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 	        auth.authenticationProvider(authenticationProvider());
 	    }
+	```
+
+	10. 로그인 설정
+	```java
+	1. login.html 설정
+	  == 생략 ==
+	2. config 클래스의 config 메소드 내용 추가
+	    {
+	       http
+	                .formLogin() //인증은form 방식
+	                .loginPage("/login") // 시큐리티가 로그인 요청하는 url, 이는 컨트롤러가 받는다.
+	                .loginProcessingUrl("/login_proc") // login.html의 form에서 action url
+	                .defaultSuccessUrl("/") // 로그인 성공 시 이동하는 url
+	                .permitAll(); //위 "/login"은 인증 필요 없이 접근가능
+	    }
+	
+	3. controller에서 .loginpage("/login") 요청 받아서 처리
+	@GetMapping("/login")
+	public String login() throws Exception {
+		return "login";
+	}
 	```

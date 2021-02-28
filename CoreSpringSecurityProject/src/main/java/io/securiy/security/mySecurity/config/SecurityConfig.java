@@ -65,7 +65,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/config").hasRole("ADMIN") // config는 ADMIN 권환의 인증된 사용자만 접근가능
                 .anyRequest().authenticated() // 설정이외 모든요청은 권한과 무관하고 인증된 사용
         .and()
-                .formLogin(); //인증은form 방식
+                .formLogin() //인증은form 방식
+                .loginPage("/login") // 시큐리티가 로그인 요청하는 url 이는 컨트롤러가 받는다.
+                .loginProcessingUrl("/login_proc") // login.html의 form에서 action url
+                .defaultSuccessUrl("/") // 로그인 성공 시 이동하는 url
+                .permitAll(); //위 "/login"은 인증 필요 없이 접근가능
     }
 
 

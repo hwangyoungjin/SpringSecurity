@@ -1,4 +1,4 @@
-package io.securiy.security.service;
+package io.securiy.security.mySecurity.service;
 
 import io.securiy.security.domain.Account;
 import io.securiy.security.repository.UserRepository;

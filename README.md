@@ -121,6 +121,7 @@
 	    WEB_JARS(new String[]{"/webjars/**"}),
 	    FAVICON(new String[]{"/favicon.*", "/*/icon-*"});
 	```
+
 	7. #### Account와 AccountDto 를 통해 회원가입 만들기
 	```java
 	1. JpaRepository 상속받아서 UserRepository 생성
@@ -166,8 +167,8 @@
 	         this.account = account;
 	     }
 	 }
-	3. UserDetailsService 구현하기
-	    @Service
+	3. UserDetailsService 구현하기 
+	    @Service //빈으로 등록해야한다.
 	    public class CustomUserDetailService implements UserDetailsService {
 	    
 	        @Autowired
@@ -200,4 +201,53 @@
 	    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 	        auth.userDetailsService(customUserDetailService);
 	    }
-	``` 
+	```
+
+	9. #### AuthenticationProvider 커스텀
+	```java
+	* AuthenticationProvider 구현시 2개의 메소드를 구현해야한다.
+
+	public class CustomAuthenticationProvider implements AuthenticationProvider {
+	        @Autowired
+	        private CustomUserDetailService customUserDetailService;
+	    
+	        @Autowired
+	        private PasswordEncoder passwordEncoder;
+	    
+	        @Override
+	        public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+	            String username = authentication.getName(); // 인증전 사용자가 입력한 id
+	            String password = (String)authentication.getCredentials(); // 인증전 사용자가 입력한 pw
+	    
+	            //인증된 UserDetails 타입의 AccountContext 객체
+	            AccountContext accountContext = (AccountContext) customUserDetailService.loadUserByUsername(username);
+	    
+	            if(!passwordEncoder.matches(password,accountContext.getPassword())){
+	                throw  new BadCredentialsException("BadCredentialsException");
+	            }
+	    
+	            //인증된 account 객체, pw는 null처리,
+	            UsernamePasswordAuthenticationToken authenticationToken =
+	                    new UsernamePasswordAuthenticationToken(accountContext.getAccount(), null,accountContext.getAuthorities());
+    	
+    	        return authenticationToken;
+    	    }
+    	
+    	    @Override
+    	    public boolean supports(Class<?> aClass) {
+    	        return UsernamePasswordAuthenticationToken.class.isAssignableFrom(aClass);
+    	    }
+    	}
+
+	* 내가만든 CustomProvider를 스프링시큐리티가 사용할 수 있도록 설정	
+	    //Bean으로 만들고
+	    @Bean
+	    public AuthenticationProvider authenticationProvider() {
+	        return new CustomAuthenticationProvider();
+	    }
+	
+	    @Override
+	    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+	        auth.authenticationProvider(authenticationProvider());
+	    }
+	```

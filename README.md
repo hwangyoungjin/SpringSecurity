@@ -269,3 +269,35 @@
 		return "login";
 	}
 	```
+
+	11. #### Security의 LogoutFilter 사용안하고 로그아웃 설정
+	```java
+	* <form>에서 POST로 "/logout" 요청시 시큐리티 로그아웃필터 자동 적용
+	* <a>에서 GET방식으로 요청시 자동으로 필터 적용X -> Controller에서 코드 추가 필요
+	
+	1. 의존성 추가
+	        <dependency>
+	            <groupId>org.thymeleaf.extras</groupId>
+	            <artifactId>thymeleaf-extras-springsecurity5</artifactId>
+	        </dependency>
+	2. html 태그의 
+	    xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5"> 추가
+	3. view에서 isAnonymous(), isAuthenticated() 사용
+	    <li class="nav-item" sec:authorize="isAnonymous()"><a class="nav-link text-light" th:href="@{/users}">회원가입</a></li>
+                 <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link text-light" th:href="@{/logout}">로그아웃</a></li>
+	   
+	4. <a>태그의 get 요청 처리할 Controller ->필터가 적용안되고 해당 컨트롤러가 /logout 처리함
+	    @GetMapping("/logout")
+	    public String logout(HttpServletRequest request, HttpServletResponse response) throws Exception{
+	
+	        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+	
+	        //자동으로 필터작동 될때 Logout 필터에서 해당 부분을 사용해서 logout한다.
+	        if(authentication != null){
+	            new SecurityContextLogoutHandler().logout(request,response,authentication);
+	        }
+	
+	        return "redirect:/login";
+	    }
+	
+	```

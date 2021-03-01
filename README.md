@@ -303,4 +303,53 @@
 		    }
 		
 		```
-	5. #### DB 방법으로 인가 처리하기
+2. ### CoreSpringDBSecurityProject (DB 연동 인가처리)
+1. #### 환경설정
+	```java
+	1. 인텔리제이
+	2. mysql	
+	3. jdk 11
+	4. maven
+	5. springboot 2.4.3
+	```
+
+	2. #### 의존성 추가
+	```java	
+	 - web
+	 - thymeleaf
+	 - security
+	 - springdataJPA
+	 - lombok
+	 - mysql 
+	 - devtools
+	 - @configurationproperties 사용을 위해 아래 의존성 추가
+	        <dependency>
+	            <groupId>org.springframework.boot</groupId>
+	            <artifactId>spring-boot-configuration-processor</artifactId>
+	        </dependency>
+	- Entity와 DTO 맵핑을 위해 modelmapper의존성 추가
+	        <dependency>
+	            <groupId>org.modelmapper</groupId>
+	            <artifactId>modelmapper</artifactId>
+	            <version>2.3.9</version>
+	            <scope>runtime</scope>
+	            <optional>true</optional>
+	        </dependency>
+	```
+
+	3. #### Mysql 연결
+	```java
+	mysql의 dbsecurity 스키마 생성, 'dbsecurity'이름의 administation 계정 생성 후
+	application.properties에 아래 내용 추가
+	## MySQL
+	# dbsecurity는 테이블명
+	spring.datasource.url=jdbc:mysql://localhost:3306/dbsecurity?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+	# workbench에서 만든 administration 계정
+	spring.datasource.username=dbsecurity
+	# 해당 계정 비번
+	spring.datasource.password=!soaka8525
+	spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+	```
+
+	4. #### [view 파일 다운로드](https://github.com/onjsdnjs/corespringsecurityfinal)
+	

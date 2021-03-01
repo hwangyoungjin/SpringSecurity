@@ -332,8 +332,6 @@
 	            <groupId>org.modelmapper</groupId>
 	            <artifactId>modelmapper</artifactId>
 	            <version>2.3.9</version>
-	            <scope>runtime</scope>
-	            <optional>true</optional>
 	        </dependency>
 	```
 
@@ -353,3 +351,9 @@
 
 	4. #### [view 파일 다운로드](https://github.com/onjsdnjs/corespringsecurityfinal)
 	
+	5. #### ERD, RDB, DCD 을 바탕으로 domain 설정 (Entity+DTO)
+	- <img src="https://user-images.githubusercontent.com/60174144/109475588-3f089e80-7ab9-11eb-971a-9ad61e3586c1.png" width="50%" height="50%">
+	- <img src="https://user-images.githubusercontent.com/60174144/109475834-84c56700-7ab9-11eb-9e44-73cd27b10daf.png" width="50%" height="50%">
+	- <img src="https://user-images.githubusercontent.com/60174144/109475935-a6bee980-7ab9-11eb-948f-7560cb3419c5.png" width="50%" height="50%">
+
+

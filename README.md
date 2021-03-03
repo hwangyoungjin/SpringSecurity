@@ -9,9 +9,10 @@
 * Spring Security를 활용한 간단한 Project 
 	- CoreSpringSecurityProject (Form 인증처리)
 	- CoreSpringDBSecurityProject (DB연동 인가처리)
+	- SpringSecurityJWT (Tutorial)
 ```
-1. ### CoreSpringSecurityProject
-	1. #### 환경설정
+1. ## CoreSpringSecurityProject (Form 인증처리)
+	1. ### 환경설정
 	```java
 	1. 인텔리제이
 	2. mysql	
@@ -20,7 +21,7 @@
 	5. springboot 2.4.3
 	```
 
-	2. #### 의존성 추가
+	2. ### 의존성 추가
 	```java	
 	 - web
 	 - thymeleaf
@@ -44,7 +45,7 @@
 	        </dependency>
 	```
 
-	3. #### Mysql 연결
+	3. ### Mysql 연결
 	```java
 	mysql의 corespringsecurity 스키마 생성, 'security'이름의 administation 계정 생성 후
 	application.properties에 아래 내용 추가
@@ -58,9 +59,9 @@
 	spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 	```
 
-	4. #### [view 파일 다운로드](https://github.com/onjsdnjs/corespringsecurityfinal)
+	4. ### [view 파일 다운로드](https://github.com/onjsdnjs/corespringsecurityfinal)
 	
-	5. #### Form인증 처리하기
+	5. ### Form인증 처리하기
 		1. ##### SecurityConfig설정
 		```java
 		1. config설정 
@@ -303,8 +304,8 @@
 		    }
 		
 		```
-2. ### CoreSpringDBSecurityProject (DB 연동 인가처리)
-1. #### 환경설정
+2. ## CoreSpringDBSecurityProject (DB 연동 인가처리)
+	1. ### 환경설정
 	```java
 	1. 인텔리제이
 	2. mysql	
@@ -313,7 +314,7 @@
 	5. springboot 2.4.3
 	```
 
-	2. #### 의존성 추가
+	2. ### 의존성 추가
 	```java	
 	 - web
 	 - thymeleaf
@@ -335,7 +336,7 @@
 	        </dependency>
 	```
 
-	3. #### Mysql 연결
+	3. ### Mysql 연결
 	```java
 	mysql의 dbsecurity 스키마 생성, 'dbsecurity'이름의 administation 계정 생성 후
 	application.properties에 아래 내용 추가
@@ -349,11 +350,56 @@
 	spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 	```
 
-	4. #### [view 파일 다운로드](https://github.com/onjsdnjs/corespringsecurityfinal)
+	4. ### [view 파일 다운로드](https://github.com/onjsdnjs/corespringsecurityfinal)
 	
-	5. #### ERD, RDB, DCD 을 바탕으로 domain 설정 (Entity+DTO)
+	5. ### ERD, RDB, DCD 을 바탕으로 domain 설정 (Entity+DTO)
 	- <img src="https://user-images.githubusercontent.com/60174144/109475588-3f089e80-7ab9-11eb-971a-9ad61e3586c1.png" width="50%" height="50%">
 	- <img src="https://user-images.githubusercontent.com/60174144/109475834-84c56700-7ab9-11eb-9e44-73cd27b10daf.png" width="50%" height="50%">
 	- <img src="https://user-images.githubusercontent.com/60174144/109475935-a6bee980-7ab9-11eb-948f-7560cb3419c5.png" width="50%" height="50%">
+
+3. ## SpringSecurityJWT Tutorial
+	1. ### JWT (Json Web Token)
+	```java
+	* JWT : JSON 객체를 사용해서 토큰 자체에 정보들을 저장하고 있는 WebToken
+	
+	* Header, Payload, Signature 3개의 부분을 구성
+	  1. Header는 Signature를 해싱하기 위한 알고리즘 정보들이 담겨있다.
+	  2. Payload는 서버와 클라이언트가 주고받는, 시스템에서 실제로 사용될 정보에 대한 내용을 담고있다.
+	  3. Signature는 토큰의 유효성 검증을 위한 문자열
+	     -> 이 문자열을 통해 서버에서 해당 토큰이 유효한 토큰인지를 검증할 수 있다.
+
+	* JWT의 장점
+	  1. 중앙의 인증서버, 데이터스토어에 대한 의존성X
+	     -> 시스템 수평 확장이 유리
+	  2. Base64 URL Safe Encoding
+	     -> URL, Cookie, Header 모두 사용가능 [범용성]
+	    
+	* JWT의 장점
+	  1. Payload의 정보가 많아지면 네트워크 사용량이 증가
+	     -> 데이터 설계 고려가 필요하다
+	  2. 토큰이 클라이언트에 저장
+	     -> 서버에서 클라이언트의 토큰을 조작할 수 없다.
+	```
+	2. ### Security설정, Data설정
+	```java
+	* 환경설정
+	  - spring
+	  - gradle
+	  - jdk 11
+	
+	* 의존성
+	  - Web
+	  - Spring security
+	  - Spring data JPA
+	  - H2
+	  - Lombok : 프로젝트 설정에서 AnnotationProcessors 을 Enable annotation processing 체크
+	  - Validation
+	```
+
+	3. ### JWT 코드, Security 설정 추가
+
+	4. ### DTO, Repository 로그인
+
+	5. ### 회원가입, 권한 인증
 
 

@@ -381,20 +381,20 @@
 	     -> 서버에서 클라이언트의 토큰을 조작할 수 없다.
 	```
 	2. ### Security설정, Data설정
-	```java
-	* 환경설정
-	  - spring
-	  - gradle
-	  - jdk 11
-	
-	* 의존성
-	  - Web
-	  - Spring security
-	  - Spring data JPA
-	  - H2
-	  - Lombok : 프로젝트 설정에서 AnnotationProcessors 을 Enable annotation processing 체크
-	  - Validation
-	```
+		```java
+		* 환경설정
+		  - spring
+		  - gradle
+		  - jdk 11
+		
+		* 의존성
+		  - Web
+		  - Spring security
+		  - Spring data JPA
+		  - H2
+		  - Lombok : 프로젝트 설정에서 AnnotationProcessors 을 Enable annotation processing 체크
+		  - Validation
+		```
 
 		1. #### 기본 RestController로 api 요청시 401 unauthorized 에러 발생
 		```java

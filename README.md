@@ -396,7 +396,6 @@
 	  - Validation
 	```
 
-	3. ### JWT 코드, Security 설정 추가
 		1. #### 기본 RestController로 api 요청시 401 unauthorized 에러 발생
 		```java
 		@RestController
@@ -483,7 +482,8 @@
 		7. #### H2 Console 결과 확인
 		- <img src="https://user-images.githubusercontent.com/60174144/109839977-faccf800-7c8a-11eb-965c-4727b76c7d56.png" width="50%" height="50%">
 
-
+	3. ### JWT 코드, Security 설정 추가
+	
 	4. ### DTO, Repository 로그인
 
 	5. ### 회원가입, 권한 인증

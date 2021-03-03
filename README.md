@@ -397,6 +397,92 @@
 	```
 
 	3. ### JWT 코드, Security 설정 추가
+		1. #### 기본 RestController로 api 요청시 401 unauthorized 에러 발생
+		```java
+		@RestController
+		@RequestMapping("/api")
+		public class HelloController {
+		    @GetMapping("/hello")
+		    public ResponseEntity<String> hello(){
+		        return ResponseEntity.ok("hello");
+		    }
+		}
+		```
+
+		2. #### 401 unauthorized 해결을 위한 SecurityConfig 설정
+		```java
+		* 기본 SecurityConfig 설정
+		@EnableWebSecurity
+		public class SecurityConfig extends WebSecurityConfigurerAdapter {
+		    @Override
+		    protected void configure(HttpSecurity http) throws Exception {
+		        http
+		                .authorizeRequests() // 모든 요청의 보안설정
+		                .antMatchers("/api/hello").permitAll() //해당 url은 허가
+		                .anyRequest().authenticated(); //나머지는 모두 인증필요
+		    }
+		}
+		```
+
+		3. #### 인메모리, Datasource, JPA 설정
+		```java
+		* application.properties 설정
+
+		# h2 콘솔 인메모리로 사용 설정
+		spring.h2.console.enabled=true
+		spring.datasource.url= jdbc:h2:mem:testdb
+		spring.datasource.username=sa
+		spring.datasource.password=
+		spring.datasource.driver-class-name=org.h2.Driver
+
+		spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+
+		# SeesionFactory가 시작될때 Drop->Create->Alter, 종료될때 Drop
+		spring.jpa.hibernate.ddl-auto=create-drop
+
+		# Query 편하게 보기
+		spring.jpa.show-sql=true
+		spring.jpa.properties.hibernate.format_sql=true
+		spring.jpa.properties.hibernate.default_batch_fetch_size=100
+		logging.level.org.hibernate.type.descriptor.sql=trace
+		```
+
+		4. #### RDB 기반 Entity 생성
+		- <img src="https://user-images.githubusercontent.com/60174144/109839389-66fb2c00-7c8a-11eb-8d86-57caafa6c62a.png" width="70%" height="70%">
+
+		5. #### H2-Console 접근 가능하도록 SecurityConfig 설정
+		```java
+		    @Override
+		    public void configure(WebSecurity web) throws Exception {
+		        web
+		                .ignoring()
+		                .antMatchers(
+		                        "/h2-console/**",
+		                        "/favicon.ico"
+		                );
+		    }
+		```
+
+		6. #### init Data 설정
+		```java
+		* resource 안 data.sql 파일 추가
+		* Spring Boot는 시작될때 root classpath location에 위치한 
+		  schema.sql, data.sql 파일의 내용들을 수행하게 되어 있다.
+		
+		/*data.sql*/
+		INSERT INTO ACCOUNT (ID, USERNAME,PASSWORD,NICKNAME,ACTIVATED)
+		 VALUES (1, 'admin', '123123','YOUNG',1);
+
+		INSERT INTO AUTHORITY (ID, AUTHORITY_NAME) VALUES (1,'ROLE_USER');
+		INSERT INTO AUTHORITY (ID, AUTHORITY_NAME) VALUES (2,'ROLE_ADMIN');
+
+		INSERT INTO ACCOUNT_AUTHORITY (ACCOUNT_ID,AUTHORITY_ID) VALUES (1,1);
+		INSERT INTO ACCOUNT_AUTHORITY (ACCOUNT_ID,AUTHORITY_ID) VALUES (1,2);
+		```		
+
+		7. #### H2 Console 결과 확인
+		- <img src="https://user-images.githubusercontent.com/60174144/109839977-faccf800-7c8a-11eb-965c-4727b76c7d56.png" width="50%" height="50%">
+
 
 	4. ### DTO, Repository 로그인
 

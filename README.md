@@ -2,15 +2,14 @@
 스프링시큐리티
 
 ---
-### 학습
-```java
-* Spring Security의 보안설정 API와 연계된 각 Filter 학습
-* Spring Security 내부 아키텍처와 각 객체의 역할 및 처리과정 학습
-* Spring Security를 활용한 간단한 Project 
-	- CoreSpringSecurityProject (Form 인증처리)
-	- CoreSpringDBSecurityProject (DB연동 인가처리)
-	- SpringSecurityJWT (Tutorial)
-```
+## 학습
+1. ### Spring Security의 보안설정 API와 연계된 각 Filter 학습
+2. ### Spring Security 내부 아키텍처와 각 객체의 역할 및 처리과정 학습
+3. ### Spring Security를 활용한 간단한 Project 
+	- #### [CoreSpringSecurityProject (Form 인증처리)](https://github.com/hwangyoungjin/SpringSecurity#corespringsecurityproject-form-%EC%9D%B8%EC%A6%9D%EC%B2%98%EB%A6%AC)
+	- #### [CoreSpringDBSecurityProject (DB연동 인가처리)](https://github.com/hwangyoungjin/SpringSecurity#corespringdbsecurityproject-db-%EC%97%B0%EB%8F%99-%EC%9D%B8%EA%B0%80%EC%B2%98%EB%A6%AC)
+	- #### [SpringSecurityJWT (Tutorial)](https://github.com/hwangyoungjin/SpringSecurity#springsecurityjwt-tutorial)
+
 1. ## CoreSpringSecurityProject (Form 인증처리)
 	1. ### 환경설정
 	```java
@@ -46,7 +45,7 @@
 	```
 
 	3. ### Mysql 연결
-	```java
+	```properties
 	mysql의 corespringsecurity 스키마 생성, 'security'이름의 administation 계정 생성 후
 	application.properties에 아래 내용 추가
 	## MySQL
@@ -337,7 +336,7 @@
 	```
 
 	3. ### Mysql 연결
-	```java
+	```properties
 	mysql의 dbsecurity 스키마 생성, 'dbsecurity'이름의 administation 계정 생성 후
 	application.properties에 아래 내용 추가
 	## MySQL
@@ -424,7 +423,7 @@
 		```
 
 		3. #### 인메모리, Datasource, JPA 설정
-		```java
+		```properties
 		* application.properties 설정
 
 		# h2 콘솔 인메모리로 사용 설정
@@ -449,7 +448,7 @@
 		4. #### RDB 기반 Entity 생성
 		- <img src="https://user-images.githubusercontent.com/60174144/109839389-66fb2c00-7c8a-11eb-8d86-57caafa6c62a.png" width="70%" height="70%">
 
-		5. #### H2-Console 접근 가능하도록 SecurityConfig 설정
+		5. #### H2-Console 접근 가능하도록 SecurityConfig WebIgnore 설정
 		```java
 		    @Override
 		    public void configure(WebSecurity web) throws Exception {
@@ -482,7 +481,279 @@
 		7. #### H2 Console 결과 확인
 		- <img src="https://user-images.githubusercontent.com/60174144/109839977-faccf800-7c8a-11eb-965c-4727b76c7d56.png" width="50%" height="50%">
 
-	3. ### JWT 코드, Security 설정 추가
+	3. ### JWT설정, JWT관련코드, Security 설정 추가
+		1. jwt관련 라이브러리 추가
+		```java
+		    compile group: 'io.jsonwebtoken',name:'jjwt-api',version:'0.11.2'
+		    runtime group: 'io.jsonwebtoken',name:'jjwt-impl',version:'0.11.2'
+		    runtime group: 'io.jsonwebtoken',name:'jjwt-jackson',version:'0.11.2'		
+		``` 
+
+		2. #### application.propertiest의 내용추가
+		```properties
+		* H2 알고리즘 사용하기 떄문에 SecretKey는 64Byte 이상되어야 한다.
+	
+		#JWT 설정
+		jwt.header=Authorization
+		#springboot-security-jwt-tutorial을 온라인에서 Base64으로 인코딩
+		jwt.secret=c3ByaW5nYm9vdC1zZWN1cml0eS1qd3QtdHV0b3JpYWw=
+		#토큰만료시간
+		jwt.token-validity-in-seconds=86400
+		```
+
+		3. #### 토큰생성,  토킁의 유효성 검증한 TokenProvider 생성
+		```java
+		@Component
+		public class TokenProvider implements InitializingBean {
+
+		    private final Logger logger = LoggerFactory.getLogger(TokenProvider.class);
+
+		    private static final String AUTHORITIES_KEY = "auth";
+		
+		    private final String secret;
+
+		    private final long tokenValidityInMilliseconds;
+
+		    private Key key;
+
+		    /**
+		     * SpEL 사용해서 properties 값 불러오기
+		     */
+		    public TokenProvider(
+		            @Value("${jwt.secret}") String secret,
+		            @Value("${jwt.token-validity-in-seconds}") long tokenValidityInMilliseconds) {
+		        this.secret = secret;
+		        this.tokenValidityInMilliseconds = tokenValidityInMilliseconds * 1000;
+		    }
+
+		    @Override
+		    public void afterPropertiesSet() throws Exception {
+		        //Secret값 디코딩해서 key변수에 할당
+		        byte[] keyBytes = Decoders.BASE64.decode(secret);
+		        this.key = Keys.hmacShaKeyFor(keyBytes);
+		    }
+		
+		    /**
+		     * 인증받은 객체의 권한 정보를 추가해서 토큰생성
+		     */
+		    public String createToken(Authentication authentication) {
+		        //권한 뺴오기
+		        String authorities = authentication.getAuthorities().stream()
+		                .map(GrantedAuthority::getAuthority)
+		                .collect(Collectors.joining(","));
+
+		        //만료시간 설정
+		        long now = (new Date()).getTime();
+		        Date validity = new Date(now + this.tokenValidityInMilliseconds);
+		
+		        //jwt 토큰 생성해서 리턴
+		        return Jwts.builder()
+		                .setSubject(authentication.getName())
+		                .claim(AUTHORITIES_KEY, authorities)
+		                .signWith(key, SignatureAlgorithm.HS512)
+		                .setExpiration(validity)
+		                .compact();
+		    }
+
+		    /**
+		     * 토큰을 받아 토큰에 담겨있는 정보를 이용해
+		     * 인증된 Authentication타입 객체를 리턴
+		     */
+		    public Authentication getAuthentication(String token) {
+		        Claims claims = Jwts
+		                .parserBuilder()
+		                .setSigningKey(key)
+		                .build()
+		                .parseClaimsJws(token)
+		                .getBody();
+
+		        Collection<? extends GrantedAuthority> authorities =
+		                Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(","))
+		                        .map(SimpleGrantedAuthority::new)
+		                        .collect(Collectors.toList());
+		
+		        User principal = new User(claims.getSubject(), "", authorities);
+		
+		        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+		    }
+
+		    /**
+		     * 토큰의 유효성 검증을 수행
+		     */
+		    public boolean validateToken(String token){
+		        try{
+		            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+		            return true;
+		        } catch (io.jsonwebtoken.security.SignatureException | MalformedJwtException e){
+		            logger.info("잘못된 JWT 서명입니다.");
+		        } catch (ExpiredJwtException e){
+		            logger.info("만료된 JWT 토큰입니다.");
+		        } catch (UnsupportedJwtException e){
+		            logger.info("지원되지 않는 JWT 토큰입니다.");
+		        } catch (IllegalArgumentException e){
+		            logger.info("JWT 토큰이 잘못되었니다.");
+		        }
+		        return false;
+		    }
+		```
+
+		4. #### JWT를 위한 커스텀 필터 생성
+		```java
+		@RequiredArgsConstructor
+		public class JwtFilter extends GenericFilterBean {
+		
+		    private static final Logger logger = LoggerFactory.getLogger(JwtFilter.class);
+		
+		    public static final String AUTHORICATION_HEADER = "Authorization";
+		
+		    private final TokenProvider tokenProvider;
+
+	
+		    /**
+		     * 토큰의 인증정보를 SecurityContext에 저장하는 역할 수행
+		     */
+		    @Override
+		    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+		            throws IOException, ServletException {
+		        //request에서 토큰받아
+		        HttpServletRequest httpServletRequest = (HttpServletRequest) request;
+		        String jwt = resolveToken(httpServletRequest);
+		        String requestURI = httpServletRequest.getRequestURI();
+	
+		        // 해당 토큰 유효성 검사 후 정상이면 SecurityContext에 Authentication 객체 저장장
+		       if(StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)){
+		            Authentication authentication = tokenProvider.getAuthentication(jwt);
+		            SecurityContextHolder.getContext().setAuthentication(authentication);
+		            logger.debug("Securty Contextdp '{}' 인증 벙보를 저장했습니다. uri: {}",authentication.getName(), requestURI);
+		        } else {
+		            logger.debug("유효한 JWT 토큰이 없습니다. uri: {}", requestURI);
+		        }
+		
+		        chain.doFilter(request,response);
+		    }
+		
+		    /**
+		     * Request Header에서 토큰정보 꺼내오기
+		     */
+		    private String resolveToken(HttpServletRequest request) {
+		        String bearerToken = request.getHeader(AUTHORICATION_HEADER);
+		        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+		            return bearerToken.substring(7);
+		        }
+		        return null;
+		    }
+		}
+		```
+
+		5. #### 만든 Provider, Filter를 SecurityConfig에 적용할때 사용할 JwtSecurityConfig 클래스 생성
+		```java
+		* SecurityConfigurerAdapter를 extends하고 TokenProvider를 주입받아서
+		  JwtFilter를 통해 Security로직에 필터를 등록하는 역할
+		* JwtFilter는 UsernamePasswordAuthenticationFilter 보다 한단계 먼저 실행된다.
+
+		@RequiredArgsConstructor
+		public class JwtSecurityConfig extends SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity> {
+
+		    private TokenProvider tokenProvider;
+
+		    @Override
+		    public void configure(HttpSecurity builder) throws Exception {
+		        JwtFilter customFilter = new JwtFilter(tokenProvider);
+		        builder.addFilterBefore(customFilter, UsernamePasswordAuthenticationFilter.class);
+		    }
+		}
+		```
+		
+		6. #### 유요한 자격 없이 접근할때 401 Unauthorized 에러를 리턴 할 클래스 생성 
+		```java
+		* 해당 클래스는 ExceptionTranslationFilter가 사용
+		
+		@Component
+		public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
+		
+		    @Override
+		    public void commence(HttpServletRequest request,
+		                         HttpServletResponse response,
+		                         AuthenticationException authException)
+		            throws IOException, ServletException {
+			//401 Unauthorized 에러를 보낸다.
+		        response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+		    }
+		}
+		```
+		
+		7. #### 필요한 권한이 존재하지 않는 경우에 403 Forbidden 에러를 리턴할 클래스 생성
+		```java
+		* 해당 클래스는 ExceptionTranslationFilter가 사용
+
+		@Component
+		public class JwtAccessDeniedHandler implements AccessDeniedHandler {
+		    @Override
+		    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
+		        response.sendError(HttpServletResponse.SC_FORBIDDEN);
+		    }
+		}
+		```
+		
+		8. #### 지금까지 만든 클래스 SecurityConfig에 적용
+		```java
+
+		@EnableWebSecurity
+		@RequiredArgsConstructor
+		//메소드 인가방식의 @PreAuthorize 어노테이션을 추가하기위하여 적용
+		@EnableGlobalMethodSecurity(prePostEnabled = true)
+		public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    
+		    private final TokenProvider tokenProvider;
+		    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+		    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+
+		    @Override
+		    protected void configure(HttpSecurity http) throws Exception {
+		        http
+		                //토큰을 사용하기 떄문에 csrf 설정은 disable
+		                .csrf().disable()
+		
+		                //Exception을 핸들링할때 만들었던 클래스 추가
+		                .exceptionHandling()
+		                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+		                .accessDeniedHandler(jwtAccessDeniedHandler)
+
+		        .and()
+		                //h2-console을 위한 설정
+		                .headers()
+		                .frameOptions()
+		                .sameOrigin()
+		
+		        .and()
+		                //세션을 사용하지 않기 떄문에 세션설정을 stateless로
+		                .sessionManagement()
+		                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+		
+		        .and()
+		                // 모든 요청의 보안설정
+		                .authorizeRequests()
+		                .antMatchers("/api/hello").permitAll() //해당 url은 허가
+		
+		                //로그인 API, 회원가입 API는 토큰이 없는 상태에서
+		                //요청이 들어오기 때문에 모두 permitAll 설정
+		                .antMatchers("/api/authenticate").permitAll()
+		                .antMatchers("/api/signup").permitAll()
+		                .anyRequest().authenticated() //나머지는 모두 인증필요
+		
+		        .and()
+		                //JwtFilter를 addFilterBefore로 등록했던 JwtSecurityConfig 클래스 적용
+		                .apply(new JwtSecurityConfig(tokenProvider));
+		    }
+		}
+		```
+
+		9. #### WeakKey에러
+		```properties
+		* properties의 secret 값을 길게 했더니 성공
+		#1111에서 springboot-security-jwt-tutorial으로 변경 (온라인에서 Base64으로 인코딩)
+		jwt.secret=c3ByaW5nYm9vdC1zZWN1cml0eS1qd3QtdHV0b3JpYWw=
+		```
 	
 	4. ### DTO, Repository 로그인
 

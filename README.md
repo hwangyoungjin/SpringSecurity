@@ -468,8 +468,9 @@
 		  schema.sql, data.sql 파일의 내용들을 수행하게 되어 있다.
 		
 		/*data.sql*/
+		/*password는 passwordEncode.encoder("123123")의 값이다.*/
 		INSERT INTO ACCOUNT (ID, USERNAME,PASSWORD,NICKNAME,ACTIVATED)
-		 VALUES (1, 'admin', '123123','YOUNG',1);
+		 VALUES (1, 'admin', '$2a$10$w3jqc54wmRtvfrvcvdG6SuclMZVg7uvhZvhH4nRo0/MaKWj2CWkHm','YOUNG',1);
 
 		INSERT INTO AUTHORITY (ID, AUTHORITY_NAME) VALUES (1,'ROLE_USER');
 		INSERT INTO AUTHORITY (ID, AUTHORITY_NAME) VALUES (2,'ROLE_ADMIN');
@@ -495,8 +496,8 @@
 	
 		#JWT 설정
 		jwt.header=Authorization
-		#springboot-security-jwt-tutorial을 온라인에서 Base64으로 인코딩
-		jwt.secret=c3ByaW5nYm9vdC1zZWN1cml0eS1qd3QtdHV0b3JpYWw=
+		#spring-framework-springboot-security-jwt-tutorial-hwang-young-jin을 온라인에서 Base64으로 인코딩
+		jwt.secret=c3ByaW5nLWZyYW1ld29yay1zcHJpbmdib290LXNlY3VyaXR5LWp3dC10dXRvcmlhbA==
 		#토큰만료시간
 		jwt.token-validity-in-seconds=86400
 		```
@@ -751,12 +752,113 @@
 		9. #### WeakKey에러
 		```properties
 		* properties의 secret 값을 길게 했더니 성공
-		#1111에서 springboot-security-jwt-tutorial으로 변경 (온라인에서 Base64으로 인코딩)
-		jwt.secret=c3ByaW5nYm9vdC1zZWN1cml0eS1qd3QtdHV0b3JpYWw=
+		#1111에서 spring-framework-springboot-security-jwt-tutorial-hwang-young-jin으로 변경 (온라인에서 Base64으로 인코딩)
+		jwt.secret=c3ByaW5nLWZyYW1ld29yay1zcHJpbmdib290LXNlY3VyaXR5LWp3dC10dXRvcmlhbC1od2FuZy15b3VuZy1qaW4=
 		```
 	
-	4. ### DTO, Repository 로그인
+	4. ### DTO, Repository 로그인 
+		1. #### 외부와의 통신에 사용할 DTO 클래스 생성
+		```java
+		* 로그인시 사용할 LoginDto
+		* 토큰 정보 Response할때 사용할 TokenDto
+		* 회원가입시 사용할 AccountDto
+		```
 
+		2. #### Repository 관련 코드 생성
+		```java
+		public interface AccountRepository extends JpaRepository<Account,Long> {
+
+		    /**
+		     * EntitiyGraph는 쿼리 수행될때 LAZY조회가 아닌 EAGER조회로 수행
+		     * username에 해당하는 account를 가져올때 Authorities도 같이 가져온다
+		     */
+		    @EntityGraph(attributePaths = "authorities")
+		    Optional<Account> findOneWithAuthoritiesByUsername(String username);
+		}
+		```
+		
+		3. #### UserDetailsService 커스텀
+		```java
+		@Service("UserDetailsService")
+		@RequiredArgsConstructor
+		public class CustomUserDetailsService implements UserDetailsService {
+		
+		    private final AccountRepository accountRepository;
+
+		    @Override
+		    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		        //DB에서 username에 해당하는 account객체 가져오고
+		        return accountRepository.findOneWithAuthoritiesByUsername(username)
+		                // 해당 객체를 UserDetails 인터페이스의 구현체인 User타입으로 변환
+		                // 변환은 createAccount 메소드 사용
+		                .map(account -> createAccount(username,account))
+		                .orElseThrow(()-> new UsernameNotFoundException(
+		                                username+" -> DB에 존재하지 않습니다."));
+		    }
+
+		    /**
+		     * username과 Account객체를 받아
+		     * Security가 지원하는 UserDetails의 구현체인
+		     * User 타입 객체 반환하는 메소드
+		     */
+		    private User createAccount(String username, Account account) {
+		        if(!account.isActivated()){
+		            throw new RuntimeException(username + " -> 활성화되어 있지 않습니다.");
+		        }
+
+		        //활성화 상태인 경우 권한 정보 가져와서
+		        List<GrantedAuthority> grantedAuthorityList
+		                = account.getAuthorities().stream()
+		                .map(authority -> new SimpleGrantedAuthority(authority.getAuthorityName()))
+		                .collect(Collectors.toList());
+
+		        //id,pw,권한정보 저장한 User 객체 반환
+		        return new User(account.getUsername(),account.getPassword(),grantedAuthorityList);
+		    }
+		}
+		```
+		4. #### 로그인 API, 관련 로직 Controller 생성
+		```java
+		@RestController
+		@RequestMapping("/api")
+		@RequiredArgsConstructor
+		public class AuthController {
+
+		    private final TokenProvider tokenProvider;
+		    private final AuthenticationManagerBuilder authenticationManagerBuilder;
+		
+		    @PostMapping("/authenticate")
+		    public ResponseEntity<TokenDto> authorize(
+		            @Valid @RequestBody LoginDto loginDto){
+		        //파라미터로 받은 id와 pw로 토큰 생성
+		        UsernamePasswordAuthenticationToken authenticationToken =
+		                new UsernamePasswordAuthenticationToken(loginDto.getUsername(),loginDto.getPassword());
+		
+		        //authenticate(authenticationToken) 실행될 때
+		        //UserDetailsService의 loadUserByUsername 메소드 실행된다.
+		        //이후 인증의 성공하면 Account객체와 권한정보 담긴 UserDetails 타입의 구현체 리턴 받는다.
+		        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+		
+		        //리턴 받았다는것은 인증에 성공한것이므로 Context의 Authentication 객체 저장
+		        SecurityContextHolder.getContext().setAuthentication(authentication);
+		
+		        //Authentication 객체 정보를 통해 jwt Token 생성
+		        String jwt = tokenProvider.createToken(authentication);
+		
+		        HttpHeaders httpHeaders = new HttpHeaders();
+
+		        //JWT 토큰을 Response Header에 넣고
+		        httpHeaders.add(JwtFilter.AUTHORICATION_HEADER, "Beaer "+jwt);
+
+		        //TokenDto를 이용하여서 넣어주고 그것을 Response Body에 넣어서 리턴
+		       return new ResponseEntity<>(new TokenDto(jwt), httpHeaders, HttpStatus.OK);
+		    }
+		}
+		```
+			
+		5. #### postMan으로 테스트
+		- <img src="https://user-images.githubusercontent.com/60174144/109982283-1b598880-7d45-11eb-9f76-8657e82b3a7e.png" width="70%" height="70%">
+		
 	5. ### 회원가입, 권한 인증
 
 

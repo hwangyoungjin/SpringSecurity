@@ -104,31 +104,32 @@
 		    }
 		}
 		```
-	
+
 		2. ##### WebIgnore : 보안 필터 없는 ( .js / .css / image )정적리소스 설정
 		```java
 		    @Override
 		    public void configure(WebSecurity web) throws Exception {
 		        web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
 		    }
-	
-		   cf.
-		public enum StaticResourceLocation {
-		    CSS(new String[]{"/css/**"}),
-		    JAVA_SCRIPT(new String[]{"/js/**"}),
-		    IMAGES(new String[]{"/images/**"}),
-		    WEB_JARS(new String[]{"/webjars/**"}),
-		    FAVICON(new String[]{"/favicon.*", "/*/icon-*"});
+
+		    cf.
+			public enum StaticResourceLocation {
+			    CSS(new String[]{"/css/**"}),
+			    JAVA_SCRIPT(new String[]{"/js/**"}),
+			    IMAGES(new String[]{"/images/**"}),
+			    WEB_JARS(new String[]{"/webjars/**"}),
+			    FAVICON(new String[]{"/favicon.*", "/*/icon-*"});
 		```
-	
+
 		3. ##### Account와 AccountDto 를 통해 회원가입 만들기
+		
 		```java
 		1. JpaRepository 상속받아서 UserRepository 생성
 		  ===생략===	
-	
+
 		2. UserService 인터페이스와 UserServiceImpl 구현
 		  ===생략===
-			
+
 		3. UserController 구현
 		 - Dto객체로 입력값 받고
 		 - MoedlMapper를 통해 DTO->Entity 매핑하고
@@ -144,7 +145,7 @@
 		        return "redirect:/";
 		    }
 		 - 이외 GetMapping은 생략
-	
+
 		* Applicatgino.properties의 
 		spring.jpa.hibernate.ddl-auto=create 설정을 통해 
 		DB에 따로 테이블 안만들어도 JPA가 자동으로 @Entity붙은 Account 테이블 만들어준다. 
@@ -195,17 +196,17 @@
 		4. config를 통해 시큐리티에서 내가만든 CustomUserDetailsService 사용하도록 설정
 		    @Autowired
 		    private CustomUserDetailService customUserDetailService;
-	
+
 		    @Override
 		    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 		        auth.userDetailsService(customUserDetailService);
 		    }
 		```
-	
+
 		5. ##### AuthenticationProvider 커스텀
 		```java
 		* AuthenticationProvider 구현시 2개의 메소드를 구현해야한다.
-	
+
 			public class CustomAuthenticationProvider implements AuthenticationProvider {
 		        @Autowired
 		        private CustomUserDetailService customUserDetailService;
@@ -237,7 +238,7 @@
     		        return UsernamePasswordAuthenticationToken.class.isAssignableFrom(aClass);
     		    }
     		}
-	
+
 		* 내가만든 CustomProvider를 스프링시큐리티가 사용할 수 있도록 설정	
 		    //Bean으로 만들고
 		    @Bean
@@ -250,7 +251,7 @@
 		        auth.authenticationProvider(authenticationProvider());
 		    }
 		```
-		
+
 		6. ##### 로그인 설정
 		```java
 		1. login.html 설정
@@ -271,7 +272,7 @@
 			return "login";
 		}
 		```
-	
+
 		7. ##### Security의 LogoutFilter 사용안하고 로그아웃 설정
 		```java
 		* <form>에서 POST로 "/logout" 요청시 시큐리티 로그아웃필터 자동 적용
@@ -301,8 +302,8 @@
 		
 		        return "redirect:/login";
 		    }
-		
 		```
+
 2. ## CoreSpringDBSecurityProject (DB 연동 인가처리)
 	1. ### 환경설정
 	```java
@@ -493,7 +494,7 @@
 		2. #### application.propertiest의 내용추가
 		```properties
 		* H2 알고리즘 사용하기 떄문에 SecretKey는 64Byte 이상되어야 한다.
-	
+
 		#JWT 설정
 		jwt.header=Authorization
 		#spring-framework-springboot-security-jwt-tutorial-hwang-young-jin을 온라인에서 Base64으로 인코딩
@@ -609,7 +610,7 @@
 		
 		    private final TokenProvider tokenProvider;
 
-	
+
 		    /**
 		     * 토큰의 인증정보를 SecurityContext에 저장하는 역할 수행
 		     */
@@ -620,7 +621,7 @@
 		        HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 		        String jwt = resolveToken(httpServletRequest);
 		        String requestURI = httpServletRequest.getRequestURI();
-	
+
 		        // 해당 토큰 유효성 검사 후 정상이면 SecurityContext에 Authentication 객체 저장장
 		       if(StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)){
 		            Authentication authentication = tokenProvider.getAuthentication(jwt);
@@ -664,7 +665,7 @@
 		    }
 		}
 		```
-		
+
 		6. #### 유요한 자격 없이 접근할때 401 Unauthorized 에러를 리턴 할 클래스 생성 
 		```java
 		* 해당 클래스는 ExceptionTranslationFilter가 사용
@@ -682,7 +683,7 @@
 		    }
 		}
 		```
-		
+
 		7. #### 필요한 권한이 존재하지 않는 경우에 403 Forbidden 에러를 리턴할 클래스 생성
 		```java
 		* 해당 클래스는 ExceptionTranslationFilter가 사용
@@ -695,7 +696,7 @@
 		    }
 		}
 		```
-		
+
 		8. #### 지금까지 만든 클래스 SecurityConfig에 적용
 		```java
 
@@ -704,7 +705,7 @@
 		//메소드 인가방식의 @PreAuthorize 어노테이션을 추가하기위하여 적용
 		@EnableGlobalMethodSecurity(prePostEnabled = true)
 		public class SecurityConfig extends WebSecurityConfigurerAdapter {
-    
+
 		    private final TokenProvider tokenProvider;
 		    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 		    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
@@ -755,7 +756,7 @@
 		#1111에서 spring-framework-springboot-security-jwt-tutorial-hwang-young-jin으로 변경 (온라인에서 Base64으로 인코딩)
 		jwt.secret=c3ByaW5nLWZyYW1ld29yay1zcHJpbmdib290LXNlY3VyaXR5LWp3dC10dXRvcmlhbC1od2FuZy15b3VuZy1qaW4=
 		```
-	
+
 	4. ### DTO, Repository 로그인 
 		1. #### 외부와의 통신에 사용할 DTO 클래스 생성
 		```java
@@ -776,9 +777,17 @@
 		    Optional<Account> findOneWithAuthoritiesByUsername(String username);
 		}
 		```
-		
+
+		```java
+		* Provider의 authenticate(authentication) 메소드에 의해 실행되는 3가지 검증
+		1. ID검증 - UserDetailsService의 loadUserByUsername 메소드 실행된다.
+		2. PW검증 - passwordEncoder.match() 를 통해 입력pw와 DB객체의 pw비교 - DaoAuthenticationProvider 에서 실행됨
+		3. 추가 검증
+		```
+
 		3. #### UserDetailsService 커스텀
 		```java
+
 		@Service("UserDetailsService")
 		@RequiredArgsConstructor
 		public class CustomUserDetailsService implements UserDetailsService {
@@ -855,10 +864,12 @@
 		    }
 		}
 		```
-			
+
 		5. #### postMan으로 테스트
 		- <img src="https://user-images.githubusercontent.com/60174144/109982283-1b598880-7d45-11eb-9f76-8657e82b3a7e.png" width="70%" height="70%">
-		
-	5. ### 회원가입, 권한 인증
 
+	5. ### 회원가입, 권한 인증
+		```JAVA
+		* 추후 추가 예정
+		```
 

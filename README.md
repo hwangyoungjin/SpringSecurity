@@ -9,6 +9,7 @@
 	- #### [CoreSpringSecurityProject (Form 인증처리)](https://github.com/hwangyoungjin/SpringSecurity#corespringsecurityproject-form-%EC%9D%B8%EC%A6%9D%EC%B2%98%EB%A6%AC)
 	- #### [CoreSpringDBSecurityProject (DB연동 인가처리)](https://github.com/hwangyoungjin/SpringSecurity#corespringdbsecurityproject-db-%EC%97%B0%EB%8F%99-%EC%9D%B8%EA%B0%80%EC%B2%98%EB%A6%AC)
 	- #### [SpringSecurityJWT (Tutorial)](https://github.com/hwangyoungjin/SpringSecurity#springsecurityjwt-tutorial)
+	- #### [SpringBootEmailVerification](https://github.com/hwangyoungjin/SpringSecurity#SpringBootEmailVerification)
 
 1. ## CoreSpringSecurityProject (Form 인증처리)
 	1. ### 환경설정
@@ -873,3 +874,353 @@
 		* 추후 추가 예정
 		```
 
+1. ## SpringBootEmailVerificationt [Email 인증처리](https://www.codejava.net/frameworks/spring-boot/email-verification-example)
+	1. ### 환경설정
+	```xml
+	* springboot 2.3.4
+	* maven
+	* jdk 11
+	* spring-data-jpa
+	* spring-security
+	* thymeleaf
+	* web
+	* devtools
+	* lombok
+	* mysql
+	* bootstrap
+	```
+	2. ### 이메일 의존성추가
+	```xml
+	<!--스프링부트는 추가빈 선언 필요 없음 -->
+	<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+	</dependency>
+	```
+	3. ### view파일추가
+	```java
+	0. login,logout 화면은 springSecurity에서 제공하는 화면 사용
+	1. index.html
+	2. register_success.html - 가입성공화면으로 이메일 인증후 login 화면으로
+	3. signup_form.html - 가입화면
+	4. users.html - 인증된 사용자에게만 접근가능
+	5. verify_fail.html - 메일인증 실패시 return
+	6. verify_success.html - 메일인증 성공시 return
+	```
+	4. ### application.properties 설정
+	```properties
+	# mysql 연결
+	spring.jpa.hibernate.ddl-auto=create-drop
+	spring.datasource.url=jdbc:mysql://localhost:3306/emailverification?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+	spring.datasource.username=root
+	spring.datasource.password= 생략
+	spring.jpa.properties.hibernate.format_sql=true
+
+	# 구글 이메일 인증사용
+	spring.mail.host=smtp.gmail.com
+	spring.mail.port=587
+	# username과 password는 이메일을 보낼때 보낸이가 된다.
+	# SMTP를 사용할 수 있도록 허용해야 한다
+	# 브라우저에서 메일 발송자가 될 구글 계정에 접속하시고 아래 URL을 클릭
+	# https://myaccount.google.com/lesssecureapps
+	spring.mail.username=yohoee770@gmail.com
+	spring.mail.password=생략
+	spring.mail.properties.mail.smtp.auth=true
+	spring.mail.properties.mail.smtp.starttls.enable=true
+	```
+	5. ### Entitiy
+	```java
+	@Entity
+	@Table(name = "users")
+	@Getter @Setter
+	@NoArgsConstructor
+	public class User {
+		
+		@Id
+		@GeneratedValue(strategy = GenerationType.IDENTITY)
+		private Long id;
+		
+		@Column(nullable = false, unique = true, length = 45)
+		private String email;
+		
+		@Column(nullable = false, length = 64)
+		private String password;
+		
+		@Column(name = "first_name", nullable = false, length = 20)
+		private String firstName;
+		
+		@Column(name = "last_name", nullable = false, length = 20)
+		private String lastName;
+		
+		/**
+		* 인증의 사용할 String 코드값
+		*/
+		@Column(name = "verification_code", length = 64)
+		private String verificationCode;
+		
+		private boolean enabled;
+		
+	}
+	```
+	6. ### Repository
+	```java
+	public interface UserRepository extends JpaRepository<User, Long> {
+		@Query("SELECT u FROM User u WHERE u.email = ?1")
+		public User findByEmail(String email);
+	
+		@Query("SELECT u FROM User u WHERE u.verificationCode = ?1")
+		public User findByVerificationCode(String code);
+	}
+	```
+
+	7. ### UserDetails의 구현체인 User 객체 상속받아 구현
+	```java
+	@Data
+	public class CustomUserDetails extends org.springframework.security.core.userdetails.User {
+
+		private User user;
+
+		public CustomUserDetails(User myUser,
+								Collection<? extends GrantedAuthority> authorities) {
+			super(myUser.getFirstName(), myUser.getPassword(), authorities);
+			this.user = myUser;
+		}
+
+		public String getFullName() {
+			return user.getFirstName() + " " + user.getLastName();
+		}
+	}
+	```
+
+	8. ### UserDetailsService 상속받아 구현
+	```java
+	@Service
+	public class UserServices implements UserDetailsService {
+
+		
+		@Autowired
+		private PasswordEncoder passwordEncoder;
+		
+		@Autowired
+		private JavaMailSender mailSender;
+
+		@Autowired
+		private UserRepository userRepository;
+
+		/**
+		* 모든 User 조회
+		*/
+		public List<User> listAll() {
+			return userRepository.findAll();
+		}
+
+		/**
+		* 가입 요청시 실행되는 메소드로 이메일을 발송요청
+		* 이용은 불가하나 DB에 저장된다.
+		*/
+		public void register(User user, String siteURL) 
+				throws UnsupportedEncodingException, MessagingException {
+			//패스워드 암호
+			String encodedPassword = passwordEncoder.encode(user.getPassword());
+			user.setPassword(encodedPassword);
+
+			//랜덤코드
+			String randomCode = RandomString.make(64);
+			user.setVerificationCode(randomCode);
+
+			//아직 이용 불가
+			user.setEnabled(false);
+
+			//DB에 저장
+			userRepository.save(user);
+
+			//메일보내기
+			sendVerificationEmail(user, siteURL);
+		}
+
+
+		/**
+		* 실질적으로 이메일을 발송시키는 메소드
+		*/
+		private void sendVerificationEmail(User user, String siteURL) 
+				throws MessagingException, UnsupportedEncodingException {
+			String toAddress = user.getEmail(); //수신자 이메일
+			String fromAddress = "yohoee770"; //발신자 이메일
+			String senderName = "hicompany"; //발신자 이름
+			String subject = "Please verify your registration"; // 메일 제목
+			String content = "Dear [[name]],<br>" //메일내용
+					+ "Please click the link below to verify your registration:<br>"
+					+ "<h3><a href=\"[[URL]]\" target=\"_self\">VERIFY</a></h3>"
+					+ "Thank you,<br>"
+					+ "Your company name.";
+			
+			// 메일 보내기위해 필요한 객체
+			MimeMessage message = mailSender.createMimeMessage();
+			MimeMessageHelper helper = new MimeMessageHelper(message,"utf-8");
+			
+			// 메일 발신자 정보(주소,이름)와 수신자메일주소, 메일제목 담기
+			helper.setFrom(fromAddress, senderName);
+			helper.setTo(toAddress);
+			helper.setSubject(subject);
+			
+			// html 내용 replace
+			content = content.replace("[[name]]", user.getLastName());
+			String verifyURL = siteURL + "/verify?code=" + user.getVerificationCode();
+			content = content.replace("[[URL]]", verifyURL);
+			
+			//본문 담기, true는 html 형식으로 보내겠다는 의미
+			helper.setText(content, true);
+			
+			//메일 발송
+			mailSender.send(message);
+			
+			System.out.println("Email has been sent");
+		}
+
+		/**
+		* 인증 코드 받아서 db와 비교
+		*/
+		public boolean verify(String verificationCode) {
+			User user = userRepository.findByVerificationCode(verificationCode);
+
+			//db의 없는 계정 or 해당 user가 이미 승인받은경우 false return
+			if (user == null || user.isEnabled()) {
+				return false;
+			} else {
+
+				//인증되었으니 Enable true
+				//기존 verificationCode null
+				user.setVerificationCode(null);
+				user.setEnabled(true);
+				//업데이트
+				userRepository.save(user);
+				return true;
+			}
+		}
+
+		/**
+	 	* 로그인시 실행되는 메소드
+	 	*/
+		@Override
+		public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+			User user = userRepository.findByEmail(username);
+			if (user == null) {
+				throw new UsernameNotFoundException("User not found");
+			}
+
+			//해당프로젝트에서 roles은 설정 안했으므로 null
+			List<GrantedAuthority> roles = new ArrayList<>();
+			roles.add(new SimpleGrantedAuthority("null"));
+
+			return new CustomUserDetails(user,roles);
+		}
+	}
+	```
+
+	9. ### Controller 구현
+	```java
+	@Controller
+	public class AppController {
+
+		@Autowired
+		private UserServices service;
+		
+		@GetMapping("")
+		public String viewHomePage() {
+			return "index";
+		}
+
+		/**
+		* 맨처음 가입 요청시 실행
+		*/
+		@GetMapping("/register")
+		public String showRegistrationForm(Model model) {
+			model.addAttribute("user", new User());
+			return "signup_form";
+		}
+
+		/**
+		* 처음 가입 요청을 했던 사용자가 가입 내용을 적고 form 요청을 했을때 실행
+		*/
+		@PostMapping("/process_register")
+		public String processRegister(User user, HttpServletRequest request) 
+				throws UnsupportedEncodingException, MessagingException {
+			service.register(user, getSiteURL(request));		
+			return "register_success";
+		}
+
+		/**
+		* 로그인시 실행되는 processRegister 핸들러에 의해 실행되며
+		* path()를 return 한다
+		* 해당 path는 이메일 버튼의 path로 들어간다.
+		* sendmail에서 버튼 url은 path의 verify + User의 VerificationCode가 붙여진다.
+		*/
+		private String getSiteURL(HttpServletRequest request) {
+			String siteURL = request.getRequestURL().toString();
+			return siteURL.replace(request.getServletPath(), "");
+		}
+
+		/**
+		* 버튼클릭시 실행되는 메소드로 인증여부를 거친 뒤 결과(html파일)를 리턴한다.
+		*/
+		@GetMapping("/verify")
+		public String verifyUser(@Param("code") String code) {
+			if (service.verify(code)) {
+				//승인된 경우
+				return "verify_success";
+			} else {
+				return "verify_fail";
+			}
+		}
+
+		/**
+		* 가입 된 사용자에게 사용자 목록(users.html)을 리턴
+		*/
+		@GetMapping("/users")
+		public String listUsers(Model model) {
+			List<User> listUsers = service.listAll();
+			model.addAttribute("listUsers", listUsers);
+
+			return "users";
+		}
+	}
+	```
+
+	10. ### SecurityConfig 설정 
+	```java
+	@Configuration
+	@EnableWebSecurity
+	public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+
+		@Autowired
+		private UserServices userServices;
+
+		@Bean
+		public BCryptPasswordEncoder passwordEncoder() {
+			return new BCryptPasswordEncoder();
+		}
+
+		/**
+		* 내가만든 UserDetailsService 클래스 사용하기
+		*/
+		@Override
+		protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+			auth.userDetailsService(userServices);
+		}
+
+		@Override
+		protected void configure(HttpSecurity http) throws Exception {
+			http.authorizeRequests()
+				.antMatchers("/users").authenticated()
+				.anyRequest().permitAll()
+				.and()
+				.formLogin()
+					.usernameParameter("email")
+					.defaultSuccessUrl("/users")
+					.permitAll()
+				.and()
+				.logout().logoutSuccessUrl("/").permitAll();
+		}
+		
+	}
+	```

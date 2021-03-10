@@ -9,7 +9,7 @@
 	- #### [CoreSpringSecurityProject (Form 인증처리)](https://github.com/hwangyoungjin/SpringSecurity#corespringsecurityproject-form-%EC%9D%B8%EC%A6%9D%EC%B2%98%EB%A6%AC)
 	- #### [CoreSpringDBSecurityProject (DB연동 인가처리)](https://github.com/hwangyoungjin/SpringSecurity#corespringdbsecurityproject-db-%EC%97%B0%EB%8F%99-%EC%9D%B8%EA%B0%80%EC%B2%98%EB%A6%AC)
 	- #### [SpringSecurityJWT (Tutorial)](https://github.com/hwangyoungjin/SpringSecurity#springsecurityjwt-tutorial)
-	- #### [SpringBootEmailVerification](https://github.com/hwangyoungjin/SpringSecurity#SpringBootEmailVerification)
+	- #### [SpringBootEmailVerification](https://github.com/hwangyoungjin/SpringSecurity#springbootemailverificationt-email-인증처리)
 
 1. ## CoreSpringSecurityProject (Form 인증처리)
 	1. ### 환경설정
@@ -1224,3 +1224,12 @@
 		
 	}
 	```
+
+	11. ### 정리
+	|        URI       	|         METHOD        |                     PARAM                      |		ACTION
+	|:-----------------:|:---------------------:|:----------------------------:|:-------------------------------------------------:|
+	| / 		|   	  GET	|	X    |        Home Return			|
+	| /register 		|   	  GET	|	X    |        가입화면(signup_form.html) return			|
+	| /process_register |        POST 	 |   User : user |   (가입 요청시) Unavailable 상태로  DB에 저장 후 로그인 PATH + 해당 User의 VerificationCode 포함된 이메일 발송, 가입 성공 표시하는 register_success.html 리턴   |
+	| /verify |        POST 	  | String : code   |   인증 성공시 successhtml리턴, 인증실패시 fail.html Return   |
+	| /users |        GET 	  | x |   가입된 User List Return   |

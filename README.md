@@ -1225,7 +1225,56 @@
 	}
 	```
 
-	11. ### 정리
+	11. ### Verification 안된 가입된 사용자 로그인시 처리
+		1. #### 로그인 성공시 처리할 핸들러 정의
+		```java
+		@Component
+		public class CustomUrlAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+
+			//리다이렉션을 위한 클래스
+			RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
+			
+			@Autowired
+			UserRepository userRepository;
+			
+			@Override
+			public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+
+				//인증된 User의 firstName을 받아 DB에서 해당 이름의 객체 꺼내기
+				String userFirstName = authentication.getName();
+				User user = userRepository.findByFirstName(userFirstName);
+
+				//해당 User의 isEnable 값을 통해 Redirection
+				if(user.isEnabled()){
+					redirectStrategy.sendRedirect(request,response,"/user");
+				} else {
+					redirectStrategy.sendRedirect(request,response,"/verify");
+				}
+			}
+		}
+		```
+		2. #### SecurityConfig 내용 추가
+		```java
+		@Autowired
+		private CustomUrlAuthenticationSuccessHandler 	customUrlAuthenticationSuccessHandler;
+
+		@Override
+		protected void configure(HttpSecurity http) throws Exception {
+			http.authorizeRequests()
+				.antMatchers("/users").authenticated()
+				.anyRequest().permitAll()
+				.and()
+				.formLogin()
+					.usernameParameter("email")
+					.defaultSuccessUrl("/")
+					.successHandler(customUrlAuthenticationSuccessHandler)
+					.permitAll()
+				.and()
+				.logout().logoutSuccessUrl("/").permitAll();
+		}
+		```
+
+	12. ### 정리
 	|        URI       	|         METHOD        |                     PARAM                      |		ACTION
 	|:-----------------:|:---------------------:|:----------------------------:|:-------------------------------------------------:|
 	| / 		|   	  GET	|	X    |        Home Return			|

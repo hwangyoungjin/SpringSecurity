@@ -30,7 +30,7 @@ public class CustomUrlAuthenticationSuccessHandler extends SimpleUrlAuthenticati
 
         //해당 User의 isEnable 값을 통해 Redirection
         if(user.isEnabled()){
-            redirectStrategy.sendRedirect(request,response,"/user");
+            redirectStrategy.sendRedirect(request,response,"/users");
         } else {
             redirectStrategy.sendRedirect(request,response,"/verify");
         }

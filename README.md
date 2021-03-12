@@ -1274,6 +1274,8 @@
 		}
 		```
 
+
+
 	12. ### 정리
 	|        URI       	|         METHOD        |                     PARAM                      |		ACTION
 	|:-----------------:|:---------------------:|:----------------------------:|:-------------------------------------------------:|
@@ -1282,3 +1284,8 @@
 	| /process_register |        POST 	 |   User : user |   (가입 요청시) Unavailable 상태로  DB에 저장 후 로그인 PATH + 해당 User의 VerificationCode 포함된 이메일 발송, 가입 성공 표시하는 register_success.html 리턴   |
 	| /verify |        POST 	  | String : code   |   인증 성공시 successhtml리턴, 인증실패시 fail.html Return   |
 	| /users |        GET 	  | x |   가입된 User List Return   |
+
+
+
+	- <img src="https://user-images.githubusercontent.com/60174144/110906027-bc9c9c00-834e-11eb-92a5-716eebd334f6.png" width="80%" height="80%">
+	

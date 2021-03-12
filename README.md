@@ -970,6 +970,8 @@
 	
 		@Query("SELECT u FROM User u WHERE u.verificationCode = ?1")
 		public User findByVerificationCode(String code);
+	
+		public User findByFirstName(String firstname);
 	}
 	```
 
@@ -981,7 +983,7 @@
 		private User user;
 
 		public CustomUserDetails(User myUser,
-								Collection<? extends GrantedAuthority> authorities) {
+					Collection<? extends GrantedAuthority> authorities) {
 			super(myUser.getFirstName(), myUser.getPassword(), authorities);
 			this.user = myUser;
 		}
@@ -1021,7 +1023,8 @@
 		public void register(User user, String siteURL) 
 				throws UnsupportedEncodingException, MessagingException {
 			//패스워드 암호
-			String encodedPassword = passwordEncoder.encode(user.getPassword());
+			String encodedPassword 
+			= passwordEncoder.encode(user.getPassword());
 			user.setPassword(encodedPassword);
 
 			//랜덤코드

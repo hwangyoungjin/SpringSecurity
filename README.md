@@ -1292,3 +1292,86 @@
 
 	- <img src="https://user-images.githubusercontent.com/60174144/110906027-bc9c9c00-834e-11eb-92a5-716eebd334f6.png" width="80%" height="80%">
 	
+	13. ### API 만들기
+		1. #### UsernamePasswordAuthenticatinoFilter 커스텀하기
+		```
+		* Form 요청이 들어오면 기존과 동일하게 적용하고
+
+		* JSON 요청이 들어오면 request의 buffer를 읽어 요청을 파싱하고 
+		  map에 데이터를 보관(Key값은 id로 들어오는 email과 pw인 password)하고
+		  사용자가 입력한 파라미터명과 동일한 키값으로
+		  기존과 동일하게 UsernamePasswordAuthenticationToken을 만들어
+		  AuthenticationManager가 authentication 과정을 진행 할 수 있도록 구현
+		* 이후 UserDetailsService에서 요청에 포함된 Username을
+		  기준으로 DB에서 사용자를 찾고 AuthenticationManger에 등록된
+		  PasswordEncoder로 패스워드를 비교하여 로그인 과정을 진행 할 것
+
+		* 오버라이딩하는 메소드는 4개로
+		 1. obtainUsername
+		 2. obtainPassword
+		 3. attemptAuthentication
+		 4. SetPostOnly
+		```
+		2. #### SuccessHandler 커스텀
+		```java
+		@Component
+		public class CustomApiUrlAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+
+			//리다이렉션을 위한 클래스
+			RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
+
+			@Autowired
+			UserRepository userRepository;
+
+			@Override
+			public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+
+				//인증된 User의 firstName을 받아 DB에서 해당 이름의 객체 꺼내기
+				String userFirstName = authentication.getName();
+				User user = userRepository.findByFirstName(userFirstName);
+
+				//해당 User의 isEnable 값을 통해 Redirection
+				if(user.isEnabled()){
+					redirectStrategy.sendRedirect(request,response,"/api/loginsuccess");
+				} else {
+					redirectStrategy.sendRedirect(request,response,"/api/loginfail");
+				}
+			}
+		}
+		```
+		3. #### 커스텀한 필터 등록
+		```java
+		@Autowired
+		CustomApiUrlAuthenticationSuccessHandler customApiUrlAuthenticationSuccessHandler;
+		
+		@Override
+		protected void configure(HttpSecurity http) throws Exception {
+			http.csrf().disable();
+			http.authorizeRequests()
+					.antMatchers("/api/login").permitAll();
+			http.formLogin().disable();
+			http.logout().logoutSuccessUrl("/").permitAll();
+
+			//새로구현한 filter 등록
+			http.addFilter(getAuthenticationFilter());
+		}
+
+		private CustomUsernamePasswordAuthenticationFilter getAuthenticationFilter() {
+			CustomUsernamePasswordAuthenticationFilter authFilter
+					= new CustomUsernamePasswordAuthenticationFilter();
+			try{
+				//해당 필터는 "/api/login" 요청 들어올때 실행
+				authFilter.setFilterProcessesUrl("/api/login");
+				authFilter.setAuthenticationManager(this.authenticationManagerBean());
+				//username과 password으로 들어올 파라미터 이름
+				authFilter.setUsernameParameter("email");
+				authFilter.setPasswordParameter("password");
+				//로그인 성공시 실행되는 핸들러
+				authFilter.setAuthenticationSuccessHandler(customApiUrlAuthenticationSuccessHandler);
+
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+			return authFilter;
+		}
+		```

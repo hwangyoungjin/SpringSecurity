@@ -18,18 +18,18 @@ public class AppRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-//        User user = new User();
-//        user.setEmail("innovation950302@gmail.com");
-//        user.setPassword(passwordEncoder.encode("123123"));
-//        user.setEnabled(false);
-//        user.setFirstName("youngjin");
-//        user.setId(1l);
-//        user.setLastName("hwang");
-//
-//        //랜덤코드
-//        String randomCode = RandomString.make(64);
-//        user.setVerificationCode(randomCode);
-//
-//        userRepository.save(user);
+        User user = new User();
+        user.setEmail("innovation950302@gmail.com");
+        user.setPassword(passwordEncoder.encode("123123"));
+        user.setEnabled(false);
+        user.setFirstName("youngjin");
+        user.setId(1l);
+        user.setLastName("hwang");
+
+        //랜덤코드
+        String randomCode = RandomString.make(64);
+        user.setVerificationCode(randomCode);
+
+        userRepository.save(user);
     }
 }

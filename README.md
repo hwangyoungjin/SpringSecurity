@@ -10,6 +10,7 @@
 	- #### [CoreSpringDBSecurityProject (DB연동 인가처리)](https://github.com/hwangyoungjin/SpringSecurity#corespringdbsecurityproject-db-%EC%97%B0%EB%8F%99-%EC%9D%B8%EA%B0%80%EC%B2%98%EB%A6%AC)
 	- #### [SpringSecurityJWT (Tutorial)](https://github.com/hwangyoungjin/SpringSecurity#springsecurityjwt-tutorial)
 	- #### [SpringBootEmailVerification](https://github.com/hwangyoungjin/SpringSecurity#springbootemailverificationt-email-인증처리)
+	- #### [SpringBootEmailVerificationSession]()
 
 1. ## CoreSpringSecurityProject (Form 인증처리)
 	1. ### 환경설정
@@ -1375,3 +1376,4 @@
 			return authFilter;
 		}
 		```
+1. ## SpringBootEmailVerificationt [Email Session 인증처리]

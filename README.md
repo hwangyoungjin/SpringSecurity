@@ -9,8 +9,8 @@
 	- #### [CoreSpringSecurityProject (Form 인증처리)](https://github.com/hwangyoungjin/SpringSecurity#corespringsecurityproject-form-%EC%9D%B8%EC%A6%9D%EC%B2%98%EB%A6%AC)
 	- #### [CoreSpringDBSecurityProject (DB연동 인가처리)](https://github.com/hwangyoungjin/SpringSecurity#corespringdbsecurityproject-db-%EC%97%B0%EB%8F%99-%EC%9D%B8%EA%B0%80%EC%B2%98%EB%A6%AC)
 	- #### [SpringSecurityJWT (Tutorial)](https://github.com/hwangyoungjin/SpringSecurity#springsecurityjwt-tutorial)
-	- #### [SpringBootEmailVerification](https://github.com/hwangyoungjin/SpringSecurity#springbootemailverificationt-email-인증처리)
-	- #### [SpringBootEmailVerificationSession]()
+	- #### [SpringBootEmailVerificationt [Email 인증처리 - 회원가입(DB저장) 후 이메일 인증]](https://github.com/hwangyoungjin/SpringSecurity#springbootemailverificationt-email-인증처리)
+	- #### [EmailVerificationSession [Email 인증처리 - 이메일 인증 후 회원가입(DB저장)]]()
 
 1. ## CoreSpringSecurityProject (Form 인증처리)
 	1. ### 환경설정
@@ -875,7 +875,7 @@
 		* 추후 추가 예정
 		```
 
-1. ## SpringBootEmailVerificationt [Email 인증처리](https://www.codejava.net/frameworks/spring-boot/email-verification-example)
+1. ## SpringBootEmailVerificationt [Email 인증처리 - 회원가입(DB저장) 후 이메일 인증](https://www.codejava.net/frameworks/spring-boot/email-verification-example)
 	1. ### 환경설정
 	```xml
 	* springboot 2.3.4
@@ -1376,4 +1376,193 @@
 			return authFilter;
 		}
 		```
-1. ## SpringBootEmailVerificationt [Email Session 인증처리]
+1. ## EmailVerificationSession [Email 인증처리 - 이메일 인증 후 회원가입(DB저장)]
+	0. ### 참고
+	- [스프링 세션 동작 원리](https://thecodinglog.github.io/spring-session/2020/08/07/filter-chain.html)
+	- [HttpSession은 "언제" 만들어질까?](https://soon-devblog.tistory.com/2)
+
+	1. ### 환경설정
+	```java
+	* jdk 11
+	* Gradle
+	* SpringBoot 2.4.3
+	* Dependency
+	 - Web
+	 - Lombok
+	 - Spring Boot Jpa
+	 - Spring Security
+	 - Devtools
+	 - H2DB
+	 - 
+	```
+	2. ### Spring Email - Gradle 의존성 추가
+	```gradle
+	compile("org.springframework.boot:spring-boot-starter-mail")
+	```
+
+	3. ### application.properties 설정
+	```properties
+	#H2DB
+	spring.jpa.hibernate.ddl-auto=create
+	spring.jpa.show-sql=true
+	spring.jpa.properties.hibernate.format_sql=true
+	logging.level.org.hibernate.type.descriptor.sql=trace
+
+	# 구글 이메일 인증사용
+	spring.mail.host=smtp.gmail.com
+	spring.mail.port=587
+	# username과 password는 이메일을 보낼때 보낸이가 된다.
+	# SMTP를 사용할 수 있도록 허용해야 한다
+	# 브라우저에서 메일 발송자가 될 구글 계정에 접속하시고 아래 URL을 클릭
+	# https://myaccount.google.com/lesssecureapps
+	spring.mail.username=이메일 생략
+	spring.mail.password=생략
+	spring.mail.properties.mail.smtp.auth=true
+	spring.mail.properties.mail.smtp.starttls.enable=true
+
+	```
+	
+	4. ### Model, Repository, Service, config 설정
+	```java
+	* github 코드 참조 (나머진 이전프로젝트랑 크게 다른부분X) 
+	
+	* Service만 조금 수정
+	/**
+     * 실질적으로 이메일을 발송시키는 메소드
+     * 인증코드를 리턴
+     */
+    public String sendVerificationEmail(String email)
+            throws MessagingException, UnsupportedEncodingException {
+        String fromAddress = "yohoee770"; //발신자 이메일
+        String senderName = "CampusContact"; //발신자 이름
+        String subject = "Please verify your registration"; // 메일 제목
+        String content = "Dear [[name]],<br>" //메일내용
+                + "Please input the Code below to verify your registration:<br>"
+                + "<h3>Code = [[code]]</h3>"
+                + "Thank you,<br>"
+                + "CampusContact";
+
+        // 메일 보내기위해 필요한 객체
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message,"utf-8");
+
+        // 메일 발신자 정보(주소,이름)와 수신자메일주소, 메일제목 담기
+        helper.setFrom(fromAddress, senderName);
+        helper.setTo(email);
+        helper.setSubject(subject);
+
+        //랜덤코드
+        Random random = new Random();
+        StringBuffer buffer = new StringBuffer();
+        int num = 0;
+
+        while(buffer.length() < 6) {
+            num = random.nextInt(10);
+            buffer.append(num);
+        }
+        String randomCode = buffer.toString();
+
+        // html 내용 replace
+        content = content.replace("[[name]]", email);
+        content = content.replace("[[code]]", randomCode);
+
+        //본문 담기, true는 html 형식으로 보내겠다는 의미
+        helper.setText(content, true);
+
+        //메일 발송
+        mailSender.send(message);
+
+        System.out.println("Email has been sent");
+
+        return randomCode;
+    }
+
+	```
+
+	5. ### AccountApiController 생성
+	```java
+	@RestController
+	@RequestMapping("/api")
+	public class AccountApiController {
+
+		@Autowired
+		AccountService accountService;
+
+		/**
+		* 이메일받아서 인증보내기
+		*/
+		@GetMapping("/email")
+		public ResponseEntity<String> email(@RequestBody AccountDto accountDto,
+											HttpSession httpSession) 
+				throws UnsupportedEncodingException, MessagingException {
+			
+			//email 받아서
+			String email = accountDto.getEmail();
+
+			//메일보내고 인증코드 받아서
+			String randomCode = accountService.sendVerificationEmail(email);
+
+			//인증코드는 받은 AccountDto에 저장하고 
+			accountDto.setVerificationCode(randomCode);
+			
+			//세션에 받은 이메일을 key로 AccountDTO 객체 Session의 저장
+			httpSession.setAttribute(accountDto.getEmail(),accountDto);
+
+			return ResponseEntity.ok("email send finished");
+		}
+
+		/**
+		* 코드,이메일을 받아서 인증 하고 맞으면 TRUE 반환, 틀리면 FALSE 반환
+		* 
+		* 이메일을 받지 않은 사용자가 verify 신청한경우는 발생하지 않아야 한다.
+		* 클라이언트에선 이메일로 인증코드 받은 경우만 verify 신청 할 수 있도록 해야한다.
+		* 
+		*/
+		@GetMapping("/verify")
+		public boolean verify(@RequestBody AccountDto newAccountDto,
+							HttpSession httpSession){
+
+			//쿠키의 맞는 세션을 받아 해당 세션에서 파라미터로 받은 이메일의 해당하는 ACCOUNT객체 꺼내고
+			//해당 객체의 코드와 파라미터로 받은 accountDto의 code를 비교
+			AccountDto originAcountDto = (AccountDto) httpSession.getAttribute(newAccountDto.getEmail());
+			
+			if(newAccountDto == null){ //쿠키가 없는경우 
+				return false;
+			}
+
+			//세션에서 꺼내온 newAccountDTO와 기존에있던 originAcountDto code가 같으면
+			if(newAccountDto.getVerificationCode().contains(originAcountDto.getVerificationCode())){
+				//인증 완료 했으므로 세션에서 지우기
+				httpSession.removeAttribute(newAccountDto.getEmail());
+				return true;
+			} else{ // 다르면
+				return false;
+			}
+		}
+
+		/**
+		* 이메일 인증된 사용자 가입 [아직미완성]
+		*/
+		@PostMapping("/register")
+		public String register(@ModelAttribute AccountDto accountDto){
+			return null;
+		}
+		
+	}
+	```
+	 
+	```java
+	[에러]
+	org.springframework.mail.MailAuthenticationException: Authentication failed; nested exception is javax.mail.AuthenticationFailedException: 535-5.7.8 Username and Password not accepted.
+
+	[원인]
+	스프링부트에서 발신자 계정 로그인이 안됨
+
+	[해결방법]
+	application.properties 에서 username, password를 옳바르게 수정	
+	```
+
+
+	- ### 정리
+	- #### 사용자가 앱을 나갔다 들어오면 이전 과정 모두 리셋 되어야 하는 방식
+	- <img src="https://user-images.githubusercontent.com/60174144/111654621-44514180-884c-11eb-8f1c-db5ddc654480.png" width="80%" height="80%">

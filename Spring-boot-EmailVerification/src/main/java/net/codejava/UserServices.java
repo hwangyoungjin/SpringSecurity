@@ -138,7 +138,6 @@ public class UserServices implements UserDetailsService {
 		if (user == null) {
 			throw new UsernameNotFoundException("User not found");
 		}
-
 		//해당프로젝트에서 roles은 설정 안했으므로 null
 		List<GrantedAuthority> roles = new ArrayList<>();
 		roles.add(new SimpleGrantedAuthority("null"));

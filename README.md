@@ -9,8 +9,8 @@
 	- #### [CoreSpringSecurityProject (Form 인증처리)](https://github.com/hwangyoungjin/SpringSecurity#corespringsecurityproject-form-%EC%9D%B8%EC%A6%9D%EC%B2%98%EB%A6%AC)
 	- #### [CoreSpringDBSecurityProject (DB연동 인가처리)](https://github.com/hwangyoungjin/SpringSecurity#corespringdbsecurityproject-db-%EC%97%B0%EB%8F%99-%EC%9D%B8%EA%B0%80%EC%B2%98%EB%A6%AC)
 	- #### [SpringSecurityJWT (Tutorial)](https://github.com/hwangyoungjin/SpringSecurity#springsecurityjwt-tutorial)
-	- #### [SpringBootEmailVerificationt [Email 인증처리 - 회원가입(DB저장) 후 이메일 인증]](https://github.com/hwangyoungjin/SpringSecurity#springbootemailverificationt-email-인증처리)
-	- #### [EmailVerificationSession [Email 인증처리 - 이메일 인증 후 회원가입(DB저장)]]()
+	- #### [SpringBootEmailVerificationt [Email 인증처리 - 회원가입(DB저장) 후 이메일 인증]](https://github.com/hwangyoungjin/SpringSecurity#springbootemailverificationt-email-%EC%9D%B8%EC%A6%9D%EC%B2%98%EB%A6%AC---%ED%9A%8C%EC%9B%90%EA%B0%80%EC%9E%85db%EC%A0%80%EC%9E%A5-%ED%9B%84-%EC%9D%B4%EB%A9%94%EC%9D%BC-%EC%9D%B8%EC%A6%9D-1)
+	- #### [EmailVerificationSession [Email 인증처리 - 이메일 인증 후 회원가입(DB저장)]](https://github.com/hwangyoungjin/SpringSecurity#emailverificationsession-email-%EC%9D%B8%EC%A6%9D%EC%B2%98%EB%A6%AC---%EC%9D%B4%EB%A9%94%EC%9D%BC-%EC%9D%B8%EC%A6%9D-%ED%9B%84-%ED%9A%8C%EC%9B%90%EA%B0%80%EC%9E%85db%EC%A0%80%EC%9E%A5-1)
 
 1. ## CoreSpringSecurityProject (Form 인증처리)
 	1. ### 환경설정

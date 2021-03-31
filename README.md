@@ -8,6 +8,7 @@
 3. ### Spring Security를 활용한 간단한 Project 
 	- #### [CoreSpringSecurityProject (Form 인증처리)](https://github.com/hwangyoungjin/SpringSecurity#corespringsecurityproject-form-%EC%9D%B8%EC%A6%9D%EC%B2%98%EB%A6%AC)
 	- #### [CoreSpringDBSecurityProject (DB연동 인가처리)](https://github.com/hwangyoungjin/SpringSecurity#corespringdbsecurityproject-db-%EC%97%B0%EB%8F%99-%EC%9D%B8%EA%B0%80%EC%B2%98%EB%A6%AC)
+	- #### [SpringSecurityRestAPILogin]()
 	- #### [SpringSecurityJWT (Tutorial)](https://github.com/hwangyoungjin/SpringSecurity#springsecurityjwt-tutorial)
 	- #### [SpringBootEmailVerificationt [Email 인증처리 - 회원가입(DB저장) 후 이메일 인증]](https://github.com/hwangyoungjin/SpringSecurity#springbootemailverificationt-email-%EC%9D%B8%EC%A6%9D%EC%B2%98%EB%A6%AC---%ED%9A%8C%EC%9B%90%EA%B0%80%EC%9E%85db%EC%A0%80%EC%9E%A5-%ED%9B%84-%EC%9D%B4%EB%A9%94%EC%9D%BC-%EC%9D%B8%EC%A6%9D-1)
 	- #### [EmailVerificationSession [Email 인증처리 - 이메일 인증 후 회원가입(DB저장)]](https://github.com/hwangyoungjin/SpringSecurity#emailverificationsession-email-%EC%9D%B8%EC%A6%9D%EC%B2%98%EB%A6%AC---%EC%9D%B4%EB%A9%94%EC%9D%BC-%EC%9D%B8%EC%A6%9D-%ED%9B%84-%ED%9A%8C%EC%9B%90%EA%B0%80%EC%9E%85db%EC%A0%80%EC%9E%A5-1)
@@ -305,8 +306,10 @@
 		        return "redirect:/login";
 		    }
 		```
+2. ## SpringSecurityRestAPILogin (RestAPI-LOGIN)
 
-2. ## CoreSpringDBSecurityProject (DB 연동 인가처리)
+
+3. ## CoreSpringDBSecurityProject (DB 연동 인가처리)
 	1. ### 환경설정
 	```java
 	1. 인텔리제이
@@ -359,7 +362,7 @@
 	- <img src="https://user-images.githubusercontent.com/60174144/109475834-84c56700-7ab9-11eb-9e44-73cd27b10daf.png" width="50%" height="50%">
 	- <img src="https://user-images.githubusercontent.com/60174144/109475935-a6bee980-7ab9-11eb-948f-7560cb3419c5.png" width="50%" height="50%">
 
-3. ## SpringSecurityJWT Tutorial
+4. ## SpringSecurityJWT Tutorial
 	1. ### JWT (Json Web Token)
 	```java
 	* JWT : JSON 객체를 사용해서 토큰 자체에 정보들을 저장하고 있는 WebToken
@@ -1566,3 +1569,15 @@
 	- ### 정리
 	- #### 사용자가 앱을 나갔다 들어오면 이전 과정 모두 리셋 되어야 하는 방식
 	- <img src="https://user-images.githubusercontent.com/60174144/111654621-44514180-884c-11eb-8f1c-db5ddc654480.png" width="80%" height="80%">
+
+	6. ### Register - MediaType 포함
+
+
+- ## 참고
+---
+1. #### [session time 설정](https://sdragoon.tistory.com/24)
+	- ##### application.properties에 설정
+	```properties
+	[참고](https://blog.voidmainvoid.net/40)
+	server.session.timeout= # Session timeout in seconds.
+	```

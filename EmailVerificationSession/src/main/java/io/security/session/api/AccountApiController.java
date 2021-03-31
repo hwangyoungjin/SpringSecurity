@@ -7,11 +7,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.support.SessionStatus;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpSession;
+import java.io.File;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -80,4 +84,23 @@ public class AccountApiController {
         return null;
     }
 
+
+
+    /**
+     * 프로필 등록 -> 창재에게 이미지는 url로 보내줄건지 물어보기기
+    */
+//    @PostMapping("/profile")
+//    public Map<String, Object> upload(@RequestParam("image") MultipartFile multipartFile) {
+//        File targetFile = new File("src/main/resources/static/imgs/" + multipartFile.getOriginalFilename());
+//        try {
+//            InputStream fileStream = multipartFile.getInputStream();
+//            FileUtils.copyInputStreamToFile(fileStream, targetFile);
+//        } catch (IOException e) {
+//            FileUtils.deleteQuietly(targetFile);
+//            e.printStackTrace();
+//        }
+//        Map<String, Object> m = new HashMap<>();
+//        m.put("errorCode", 10);
+//        return m;
+//    }
 }

@@ -306,7 +306,9 @@
 		        return "redirect:/login";
 		    }
 		```
-2. ## SpringSecurityRestAPILogin (RestAPI-LOGIN)
+
+2. ## SpringSecurity RestAPI (Ajax 방식)
+
 
 
 3. ## CoreSpringDBSecurityProject (DB 연동 인가처리)

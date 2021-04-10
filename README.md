@@ -1583,3 +1583,34 @@
 	[참고](https://blog.voidmainvoid.net/40)
 	server.session.timeout= # Session timeout in seconds.
 	```
+
+2. #### [강제로그인 설정](http://trandent.com/article/Spring/detail/633)
+	```java
+	@PostMapping("/register")
+    public Header<LoginApiResponse> create(@RequestBody Header<AccountApiRequest> request,
+                                           HttpSession httpSession) {
+	
+		/**
+		* 강제로그인
+		*/
+		//권한 가져와서
+		List<GrantedAuthority> roles = new ArrayList<>();
+		roles.add(new SimpleGrantedAuthority("ROLE_USER"));
+
+		//파라미터로 받은 id, pw 토큰 생성
+		Authentication ajaxAuthenticationToken =
+				new AjaxAuthenticationToken(request.getData().getEmail(), request.getData().getPassword(),roles);
+
+		//인증 성공한것으로 Context의 Authentication 객체 저장
+		SecurityContext securityContext = SecurityContextHolder.getContext();
+		securityContext.setAuthentication(ajaxAuthenticationToken);
+
+		//세션에 spring security context 넣음
+		httpSession.setAttribute("SPRING_SECURITY_CONTEXT",securityContext);  
+
+		LoginApiResponse loginApiResponse = LoginApiResponse.builder()
+				.result("true")
+				.build();
+		return Header.OK(loginApiResponse);
+	
+	```

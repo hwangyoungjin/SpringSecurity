@@ -57,7 +57,7 @@
 	# workbench에서 만든 administration 계정
 	spring.datasource.username=security
 	# 해당 계정 비번
-	spring.datasource.password=!soaka8525
+	spring.datasource.password=
 	spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 	```
 
@@ -353,7 +353,7 @@
 	# workbench에서 만든 administration 계정
 	spring.datasource.username=dbsecurity
 	# 해당 계정 비번
-	spring.datasource.password=!soaka8525
+	spring.datasource.password=
 	spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 	```
 
